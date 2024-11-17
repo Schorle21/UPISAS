@@ -26,6 +26,7 @@ def get_response_for_get_request(url):
     try:
         logging.info("GET request to " + str(url))
         response = requests.get(url)
+        print(response)
         return response
     except requests.exceptions.ConnectionError as e:
         logging.error(e)

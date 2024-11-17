@@ -72,6 +72,7 @@ class Strategy(ABC):
 
     def _perform_get_request(self, endpoint_suffix: "API Endpoint"):
         url = '/'.join([self.exemplar.base_endpoint, endpoint_suffix])
+        print(f"Trying to reach {url}")
         response = get_response_for_get_request(url)
         if response.status_code == 404:
             logging.error("Please check that the endpoint you are trying to reach actually exists.")

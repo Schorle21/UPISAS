@@ -1,4 +1,5 @@
 import docker
+import threading
 from abc import ABC, abstractmethod
 from rich.progress import Progress
 from UPISAS import show_progress
@@ -7,6 +8,16 @@ from docker.errors import DockerException
 from UPISAS.exceptions import DockerImageNotFoundOnDockerHub
 
 logging.getLogger().setLevel(logging.INFO)
+
+def read_container_logs(container_name_or_id):
+    client = docker.from_env()
+    container = client.containers.get(container_name_or_id)
+    
+    # Stream logs
+    for log in container.logs(stream=True):
+        print(log.decode('utf-8'))
+
+
 
 
 class Exemplar(ABC):
@@ -17,9 +28,11 @@ class Exemplar(ABC):
     def __init__(self, base_endpoint: "string with the URL of the exemplar's HTTP server", \
                  docker_kwargs,
                  auto_start: "Whether to immediately start the container after creation" =False,
+                 read_log: "Wheter to read out the logs" = False,
                  ):
         '''Create an instance of the Exemplar class'''
         self.base_endpoint = base_endpoint
+        self.read_log = read_log
         image_name = docker_kwargs["image"]
         image_owner = image_name.split("/")[0]
         try:
@@ -60,6 +73,10 @@ class Exemplar(ABC):
             else:
                 logging.info("starting container...")
                 self.exemplar_container.start()
+            
+            if self.read_log == True:
+                log_thread = threading.Thread(target=read_container_logs, args=(self.exemplar_container.id,))
+                log_thread.start()
             return True
         except docker.errors.NotFound as e:
             logging.error(e)
