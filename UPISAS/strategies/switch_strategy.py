@@ -1,7 +1,7 @@
 from UPISAS.strategy import Strategy
 
 
-class EmptyStrategy(Strategy):
+class switchStrategy(Strategy):
 
     def analyze(self):
         return True
