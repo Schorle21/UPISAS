@@ -15,7 +15,7 @@ if __name__ == '__main__':
     exemplar_kibana = SWITCH_Kibana(auto_start=True)
     exemplar_back = SWITCH_Backend(auto_start=True)
     exemplar_front = SWITCH_Frontend(auto_start=True)
-    time.sleep(90)
+    time.sleep(180)
     
     #Add a loop here that tests for 
 
