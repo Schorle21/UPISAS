@@ -32,8 +32,9 @@ if __name__ == '__main__':
             input("Try to adapt?")
             strategy.monitor(verbose=True)
             if strategy.analyze():              #Error occurrs here (NOT IMPLEMENTED)
-                if strategy.plan():
-                    strategy.execute()
+                adaptation = strategy.plan()
+                if adaptation is not None:
+                    strategy.execute(adaptation=adaptation)
             
     except (Exception, KeyboardInterrupt) as e:
         print(str(e))

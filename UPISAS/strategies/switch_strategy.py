@@ -41,36 +41,50 @@ class SwitchStrategy(Strategy):
         print("return true")
         return True
 
-    def plan(self):
+    def determine_adaptation(self, model, in_rate):
+        min_key = f"{model}_rate_min"
+        max_key = f"{model}_rate_max"
+        min_val = self.knowledge.adaptation_options[min_key]
+        max_val = self.knowledge.adaptation_options[max_key]
 
-        adaptation = ''
-        
-        # df = pd.read_csv('knowledge.csv', header=None)
-        # array = df.to_numpy()
-
-        in_rate = self.knowledge.monitored_data["input_rate"][-1]
-
-        print("knowledge: ", self.knowledge)
-        
-
-        #check's which model's thershold range is input rate within and accordingly determines the adaptation.
-        # logger.info(    {'Component': "Planner" , "adaptation": "Generating the adaptation plan" } )
-
-        print("plan data: ", self.knowledge.plan_data)
-
-        if( in_rate >= self.knowledge.adaptation_options["yolov5n_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5n_rate_max"]):
-            adaptation = {"option": "yolov5n_rate_min", "new_value": in_rate}
-        elif( in_rate >= self.knowledge.adaptation_options["yolov5s_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5s_rate_max"] ):
-             adaptation = {"option": "yolov5s_rate_min", "new_value": in_rate}
-        elif( in_rate >= self.knowledge.adaptation_options["yolov5m_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5m_rate_max"] ):
-             adaptation = {"option": "yolov5m_rate_min", "new_value": in_rate}
-        elif( in_rate >= self.knowledge.adaptation_options["yolov5l_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5l_rate_max"] ):
-             adaptation = {"option": "yolov5l_rate_min", "new_value": in_rate}
-        elif ( in_rate >= self.knowledge.adaptation_options["yolov5x_rate_min"]  and in_rate <= self.knowledge.adaptation_options["yolov5x_rate_max"]  ) : #and in_rate < array[4][2]
-             adaptation = {"option": "yolov5x_rate_min", "new_value": in_rate}
+        if in_rate < min_val:
+            return {"option": min_key, "new_value": in_rate}
+        elif in_rate > max_val:
+            return {"option": max_key, "new_value": in_rate}
         else:
-            # logger.error(    {'Component': "Planner" , "adaptation": "No adaptation plan generated" }  ) 
-            print("No adaptation plan generated")
-            return
+            # Determine which threshold to adjust based on proximity
+            if abs(in_rate - min_val) < abs(in_rate - max_val):
+                return {"option": min_key, "new_value": in_rate}
+            else:
+                return {"option": max_key, "new_value": in_rate}
+
+    def plan(self):
+        print("Entering plan method")
+
+        adaptation = None
         
+        in_rate = self.knowledge.monitored_data["input_rate"][-1]
+        print("in_rate:", in_rate)
+
+        print("knowledge:", self.knowledge)
+
+        # Check which model's threshold range the input rate is within and accordingly determine the adaptation.
+        print("plan data:", self.knowledge.plan_data)
+
+        if in_rate >= self.knowledge.adaptation_options["yolov5n_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5n_rate_max"]:
+            adaptation = self.determine_adaptation("yolov5n", in_rate)
+        elif in_rate >= self.knowledge.adaptation_options["yolov5s_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5s_rate_max"]:
+            adaptation = self.determine_adaptation("yolov5s", in_rate)
+        elif in_rate >= self.knowledge.adaptation_options["yolov5m_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5m_rate_max"]:
+            adaptation = self.determine_adaptation("yolov5m", in_rate)
+        elif in_rate >= self.knowledge.adaptation_options["yolov5l_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5l_rate_max"]:
+            adaptation = self.determine_adaptation("yolov5l", in_rate)
+        elif in_rate >= self.knowledge.adaptation_options["yolov5x_rate_min"] and in_rate <= self.knowledge.adaptation_options["yolov5x_rate_max"]:
+            adaptation = self.determine_adaptation("yolov5x", in_rate)
+        else:
+            print("No adaptation plan generated")
+            return None
+        
+        print("Generated adaptation:", adaptation)
+        self.knowledge.plan_data = adaptation
         return adaptation

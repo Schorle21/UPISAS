@@ -12,12 +12,27 @@ from pathlib import Path
 from os.path import dirname, realpath
 import time
 import statistics
+import requests
 
 from UPISAS.strategies.switch_strategy import SwitchStrategy
 from UPISAS.exemplars.switch import SWITCH_Elasticsearch
 from UPISAS.exemplars.switch import SWITCH_Kibana
 from UPISAS.exemplars.switch import SWITCH_Backend
 from UPISAS.exemplars.switch import SWITCH_Frontend
+
+def wait_for_connection():
+    try:
+        response = requests.get("http://localhost:8000/monitor")
+        if response.status_code == 200:
+            print("Success")
+            print(response)
+            return True
+        else:
+            print("Error")
+            return False
+    except Exception as e:
+        print(e)
+        return False
 
 
 class RunnerConfig:
@@ -90,26 +105,16 @@ class RunnerConfig:
         No context is available here as the run is not yet active (BEFORE RUN)"""
         # Attempt to initialize the exemplar and strategy
 
-        exemplar_elasticsearch = SWITCH_Elasticsearch(auto_start=True)  
-        exemplar_kibana = SWITCH_Kibana(auto_start=True)
+        self.elasticsearch = SWITCH_Elasticsearch(auto_start=True)  
+        self.kibana = SWITCH_Kibana(auto_start=True)
         self.exemplar = SWITCH_Backend(auto_start=True)
-        exemplar_front = SWITCH_Frontend(auto_start=True)
+        self.front = SWITCH_Frontend(auto_start=True)
 
         self.strategy = SwitchStrategy(self.exemplar)
         
-        time.sleep(180)
-
-        # if not exemplar_elasticsearch.is_running():
-        #     output.console_log("Elasticsearch is not running.")
-
-        # if not exemplar_kibana.is_running():
-        #     output.console_log("Kibana is not running.")
-
-        # if not self.exemplar.is_running():
-        #     output.console_log("Backend is not running.")
-
-        # if not exemplar_front.is_running():
-        #     output.console_log("Frontend is not running.")
+        while not wait_for_connection():
+            print("Waiting for connection to open")
+            time.sleep(5)
         
         # time.sleep(3)
         output.console_log("Config.before_run() called!")
@@ -144,8 +149,9 @@ class RunnerConfig:
             self.strategy.get_adaptation_options()
             self.strategy.monitor(verbose=True)
             if self.strategy.analyze():
-                if self.strategy.plan():
-                    self.strategy.execute()
+                adaptation = self.strategy.plan()
+                if adaptation is not None:
+                    self.strategy.execute(adaptation=adaptation)
 
             time.sleep(3)
             time_slept+=3
@@ -164,6 +170,9 @@ class RunnerConfig:
         """Perform any activity here required for stopping the run.
         Activities after stopping the run should also be performed here."""
         self.exemplar.stop_container()
+        self.kibana.stop_container()
+        self.elasticsearch.stop_container()
+        self.front.stop_container()
         output.console_log("Config.stop_run() called!")
 
     def populate_run_data(self, context: RunnerContext) -> Optional[Dict[str, SupportsStr]]:
@@ -183,30 +192,7 @@ class RunnerConfig:
         utilities = []
         print("MON DATA")
         print(mon_data)
-        for i in range(len(mon_data["max_servers"])):
-
-            maxServers = int(mon_data["max_servers"][i])
-            arrivalRateMean = mon_data["arrival_rate"][i]
-            dimmer = mon_data["dimmer_factor"][i]
-            maxThroughput = maxServers * self.strategy.MAX_SERVICE_RATE
-            avgServers = mon_data["servers"][i]
-            avgResponseTime = (mon_data["basic_rt"][i] * mon_data["basic_throughput"][i] + mon_data["opt_rt"][i] * mon_data["opt_throughput"][i]) / (mon_data["basic_throughput"][i] + mon_data["opt_throughput"][i])
-
-            Ur = (arrivalRateMean * ((1 - dimmer) * basicRevenue + dimmer * optRevenue))
-            Uc = serverCost * (maxServers - avgServers)
-            UrOpt = arrivalRateMean * optRevenue
-            utility = 0
-
-            if(avgResponseTime <= self.strategy.RT_THRESHOLD and Ur >= UrOpt - precision):
-                utility = Ur + Uc
-            else:                
-                if(avgResponseTime <= self.strategy.RT_THRESHOLD):
-                    utility = Ur
-                else:
-                    utility = min(0.0, arrivalRateMean - maxThroughput) * optRevenue
-            utilities.append(utility)
-        
-        return {"utility" : utilities}
+        return mon_data
 
     def after_experiment(self) -> None:
         output.console_log("executing after_experiment")

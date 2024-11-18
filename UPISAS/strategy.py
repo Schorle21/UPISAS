@@ -6,6 +6,8 @@ from UPISAS.exceptions import EndpointNotReachable, ServerNotReachable
 from UPISAS.knowledge import Knowledge
 from UPISAS import validate_schema, get_response_for_get_request
 import logging
+import urllib.parse
+import http.client
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -35,17 +37,38 @@ class Strategy(ABC):
         return True
 
     def execute(self, adaptation=None, endpoint_suffix="execute", with_validation=True):
-        if(not adaptation): adaptation= self.knowledge.plan_data
-        if with_validation:
-            if(not self.knowledge.execute_schema): self.get_execute_schema()
-            validate_schema(adaptation, self.knowledge.execute_schema)
-        url = '/'.join([self.exemplar.base_endpoint, endpoint_suffix])
-        response = requests.put(url, json=adaptation)
-        print("[Execute]\tposted configuration: " + str(adaptation))
-        if response.status_code == 404:
-            logging.error("Cannot execute adaptation on remote system, check that the execute endpoint exists.")
-            raise EndpointNotReachable
-        return True
+            if not adaptation:
+                adaptation = self.knowledge.plan_data
+            if with_validation:
+                if not self.knowledge.execute_schema:
+                    self.get_execute_schema()
+                try:
+                    validate_schema(adaptation, self.knowledge.execute_schema)
+                except Exception as e:
+                    logging.error(f"Validation error: {e}")
+                    raise
+            url = '/'.join([self.exemplar.base_endpoint, endpoint_suffix])
+            print(f"[Execute]\tposting configuration: {adaptation} to {url}")
+
+            # Parse the base endpoint to get the host and port
+            parsed_url = urllib.parse.urlparse(url)
+            host = parsed_url.hostname
+            port = parsed_url.port
+            path = parsed_url.path
+
+            # Add query parameters
+            query_params = urllib.parse.urlencode(adaptation)
+            full_path = f"{path}?{query_params}"
+
+            conn = http.client.HTTPConnection(host, port)
+            headers = {'Content-type': 'application/json'}
+            conn.request("PUT", full_path, headers=headers)
+            response = conn.getresponse()
+            print(f"[Execute]\tresponse status: {response.status}, response text: {response.read().decode()}")
+            if response.status == 404:
+                logging.error("Cannot execute adaptation on remote system, check that the execute endpoint exists.")
+                raise EndpointNotReachable
+            return True
 
     def get_adaptation_options(self, endpoint_suffix: "API Endpoint" = "adaptation_options", with_validation=True):
         self.knowledge.adaptation_options = self._perform_get_request(endpoint_suffix)
