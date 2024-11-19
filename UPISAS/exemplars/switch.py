@@ -29,7 +29,7 @@ class SWITCH_Backend(Exemplar):
             "name":  container_name,
             "image": "schorle21/switch-3_backend",
             "ports" : {3001:3001,5001:5001,8000:8000,8089:8089},
-            "environment":{"ELASTICSEARCH_HOST": "http://elasticsearch_UPISAS:9200"},
+            "environment":{"ELASTICSEARCH_HOST": "http://elasticsearch:9200"},
             "network":network_name,
             }
 
@@ -49,11 +49,11 @@ class SWITCH_Kibana(Exemplar):
             "name":  container_name,
             "image": "kibana:7.9.1",
             "ports" : {5601:5601},
-            "environment":{"ELASTICSEARCH_HOSTS":"http://elasticsearch_UPISAS:9200"},
+            "environment":{"ELASTICSEARCH_HOSTS":"http://elasticsearch:9200"},
             "network" : network_name,
         }
                         
-        super().__init__("http://kibana:5601", docker_config, auto_start,read_log=False)
+        super().__init__("http://kibana_UPISAS:5601", docker_config, auto_start,read_log=False)
 
     def start_run(self, app):
         #self.exemplar_container.exec_run(cmd = f' sh -c "cd /usr/src/app && node {app}" ', detach=True)
@@ -66,7 +66,7 @@ class SWITCH_Elasticsearch(Exemplar):
     """
     A class which encapsulates a self-adaptive SWITCH exemplar run in a docker container.
     """
-    def __init__(self, auto_start, container_name="elasticsearch_UPISAS"):
+    def __init__(self, auto_start, container_name="elasticsearch"):
         
         #Attempt to create the network bridge
         try:

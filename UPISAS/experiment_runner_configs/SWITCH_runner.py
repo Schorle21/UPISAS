@@ -20,6 +20,41 @@ from UPISAS.exemplars.switch import SWITCH_Kibana
 from UPISAS.exemplars.switch import SWITCH_Backend
 from UPISAS.exemplars.switch import SWITCH_Frontend
 
+
+def SWITCH_bootup():
+    #Run the scripts 
+    print("Invoking process.py scripts...")
+    url = "http://localhost:3001/execute-python-script"
+    response = requests.post(url)
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+
+    print("Setting Naive model")
+    url = "http://localhost:3001/useNaiveKnowledge"
+    response = requests.post(url)
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+
+    print("Uploading files and starting processing...")
+
+    #Upload the form data
+    url = "http://localhost:3001/api/upload"
+    files = {
+        "zipFile": open("/Users/marcel/Desktop/FAS/photos1.zip", "rb") if "/Users/marcel/Desktop/FAS/photos1.zip" else None,
+        "csvFile": open("/Users/marcel/Desktop/FAS/intervals.csv", "rb"),
+    }
+    data = {
+        "approch": "NAIVE",  # Replace with the actual value of ⁠ selectedOption ⁠
+        "folder_location": ""  # Replace with the actual value of ⁠ loc ⁠, or remove if None
+    }
+
+    # Send POST request
+    response = requests.post(url, files=files, data=data)
+
+    # Handle response
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+
 def wait_for_connection():
     try:
         response = requests.get("http://localhost:8000/monitor")
@@ -31,7 +66,6 @@ def wait_for_connection():
             print("Error")
             return False
     except Exception as e:
-        print(e)
         return False
 
 
@@ -96,15 +130,6 @@ class RunnerConfig:
         """Perform any activity required before starting the experiment here
         Invoked only once during the lifetime of the program."""
 
-        output.console_log("Config.before_experiment() called!")
-
-
-    def before_run(self) -> None:
-        output.console_log("executing before_run")
-        """Perform any activity required before starting a run.
-        No context is available here as the run is not yet active (BEFORE RUN)"""
-        # Attempt to initialize the exemplar and strategy
-
         self.elasticsearch = SWITCH_Elasticsearch(auto_start=True)  
         self.kibana = SWITCH_Kibana(auto_start=True)
         self.exemplar = SWITCH_Backend(auto_start=True)
@@ -115,6 +140,17 @@ class RunnerConfig:
         while not wait_for_connection():
             print("Waiting for connection to open")
             time.sleep(5)
+
+        SWITCH_bootup()
+
+        output.console_log("Config.before_experiment() called!")
+
+
+    def before_run(self) -> None:
+        output.console_log("executing before_run")
+        """Perform any activity required before starting a run.
+        No context is available here as the run is not yet active (BEFORE RUN)"""
+        # Attempt to initialize the exemplar and strategy
         
         # time.sleep(3)
         output.console_log("Config.before_run() called!")
@@ -142,11 +178,9 @@ class RunnerConfig:
         self.strategy.get_monitor_schema()
         self.strategy.get_adaptation_options_schema()
         self.strategy.get_execute_schema()
-
-        
+        self.strategy.get_adaptation_options()
 
         while time_slept < 10:
-            self.strategy.get_adaptation_options()
             self.strategy.monitor(verbose=True)
             if self.strategy.analyze():
                 adaptation = self.strategy.plan()
@@ -169,10 +203,6 @@ class RunnerConfig:
         output.console_log("executing stop_run")
         """Perform any activity here required for stopping the run.
         Activities after stopping the run should also be performed here."""
-        self.exemplar.stop_container()
-        self.kibana.stop_container()
-        self.elasticsearch.stop_container()
-        self.front.stop_container()
         output.console_log("Config.stop_run() called!")
 
     def populate_run_data(self, context: RunnerContext) -> Optional[Dict[str, SupportsStr]]:
@@ -198,6 +228,10 @@ class RunnerConfig:
         output.console_log("executing after_experiment")
         """Perform any activity required after stopping the experiment here
         Invoked only once during the lifetime of the program."""
+        self.exemplar.stop_container()
+        self.kibana.stop_container()
+        self.elasticsearch.stop_container()
+        self.front.stop_container()
         output.console_log("Config.after_experiment() called!")
 
     # ================================ DO NOT ALTER BELOW THIS LINE ================================
