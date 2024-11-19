@@ -3,6 +3,12 @@ import time
 
 class SwitchStrategy(Strategy):
 
+    def _init_(self, exemplar):
+        super()._init_(exemplar)
+        self.time = -1
+        self.count = 0
+
+
     def analyze(self):
         data = self.knowledge.monitored_data
 
@@ -15,30 +21,20 @@ class SwitchStrategy(Strategy):
         str_max = model + "_rate_max"
         current_time = time.time()
 
-        # get's the minimum and maximum threshold values for the current working model.
-
+        # Get the minimum and maximum threshold values for the current working model.
         min_val = self.knowledge.adaptation_options[str_min]
         max_val = self.knowledge.adaptation_options[str_max]
 
         print("in_rate: ", input_rate)
 
-        if ((max_val >= input_rate and min_val <= input_rate) == False):
-
-            if (self.time == -1):
+        if not (min_val <= input_rate <= max_val):
+            if self.time == -1:
                 self.time = current_time
-            # if threshold sre violated for more than 0.25 sec, we create planner object to obtain the adaptation plan
-            elif (current_time - self.time > 0.25):
-
+            elif current_time - self.time > 0.25:
                 self.count += 1
-                print("<25s true")
                 return True
-                # logger.info(    {'Component': "Analyzer" , "adaptation": "Creating Planner object" }  ) 
-                # plan_obj = Planner(input_rate, model)
-                # plan_obj.generate_adaptation_plan(self.count)
-
         else:
             self.time = -1
-        print("return true")
         return True
 
     def determine_adaptation(self, model, in_rate):
