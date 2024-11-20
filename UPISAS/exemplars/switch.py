@@ -53,7 +53,7 @@ class SWITCH_Kibana(Exemplar):
             "network" : network_name,
         }
                         
-        super().__init__("http://kibana_UPISAS:5601", docker_config, auto_start,read_log=False)
+        super().__init__("http://kibana_UPISAS:5601", docker_config, auto_start,read_log=True)
 
     def start_run(self, app):
         #self.exemplar_container.exec_run(cmd = f' sh -c "cd /usr/src/app && node {app}" ', detach=True)
@@ -85,7 +85,7 @@ class SWITCH_Elasticsearch(Exemplar):
             "network":network_name,
             }
 
-        super().__init__("http://localhost:9200", docker_config, auto_start,read_log=False)
+        super().__init__("http://localhost:9200", docker_config, auto_start,read_log=True)
 
     def start_run(self, app):
         #self.exemplar_container.exec_run(cmd = f' sh -c "cd /usr/src/app && node {app}" ', detach=True)

@@ -19,7 +19,9 @@ from UPISAS.exemplars.switch import SWITCH_Elasticsearch
 from UPISAS.exemplars.switch import SWITCH_Kibana
 from UPISAS.exemplars.switch import SWITCH_Backend
 from UPISAS.exemplars.switch import SWITCH_Frontend
+from UPISAS.experiment_runner_configs.elastic import get_data_from_elastic
 
+import pandas as pd
 
 def SWITCH_bootup():
     #Run the scripts 
@@ -40,8 +42,8 @@ def SWITCH_bootup():
     #Upload the form data
     url = "http://localhost:3001/api/upload"
     files = {
-        "zipFile": open("/Users/marcel/Desktop/FAS/photos1.zip", "rb") if "/Users/marcel/Desktop/FAS/photos1.zip" else None,
-        "csvFile": open("/Users/marcel/Desktop/FAS/intervals.csv", "rb"),
+        "zipFile": open("./images/photos1.zip", "rb") if "./images/photos1.zip" else None,
+        "csvFile": open("./images/intervals.csv", "rb"),
     }
     data = {
         "approch": "NAIVE",  # Replace with the actual value of ⁠ selectedOption ⁠
@@ -120,7 +122,7 @@ class RunnerConfig:
             factors=[factor1],
             exclude_variations=[
             ],
-            data_columns=['utility']
+            data_columns=['confidence','model_processing_time','image_processing_time','absolute_processing_time','input_rate','model']
         )
         output.console_log("create_run_table_model executed")
         return self.run_table_model
@@ -211,18 +213,18 @@ class RunnerConfig:
         You can also store the raw measurement data under context.run_dir
         Returns a dictionary with keys self.run_table_model.data_columns and their values populated"""
 
+        print("POPULATING DATA FIELDS")
+        df = get_data_from_elastic()
+        
         output.console_log("Config.populate_run_data() called!")
 
-        basicRevenue = 1
-        optRevenue = 1.5
-        serverCost = 10
-        
-        precision = 1e-5
+        filtered_df = df[['confidence', 'model_processing_time','image_processing_time','absolute_time_from_start']]
+        return_dict = filtered_df.to_dict()
+
         mon_data = self.strategy.knowledge.monitored_data
-        utilities = []
-        print("MON DATA")
-        print(mon_data)
-        return mon_data
+        return_dict.update(mon_data)
+        print(return_dict)
+        return return_dict
 
     def after_experiment(self) -> None:
         output.console_log("executing after_experiment")
