@@ -117,7 +117,7 @@ class RunnerConfig:
         output.console_log("executing create_run_table_model")
         """Create and return the run_table model here. A run_table is a List (rows) of tuples (columns),
         representing each run performed"""
-        factor1 = FactorModel("rt_threshold", [0.75, 0.50, 0.25])
+        factor1 = FactorModel("run_index", [1,2,3])
         self.run_table_model = RunTableModel(
             factors=[factor1],
             exclude_variations=[
@@ -162,7 +162,7 @@ class RunnerConfig:
         """Perform any activity required for starting the run here.
         For example, starting the target system to measure.
         Activities after starting the run should also be performed here."""
-        self.strategy.RT_THRESHOLD = float(context.run_variation['rt_threshold'])
+        self.strategy.RUN_VARIATION = float(context.run_variation['run_index'])
 
         self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
         time.sleep(3)
