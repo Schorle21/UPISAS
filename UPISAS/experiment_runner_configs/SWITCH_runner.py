@@ -23,6 +23,36 @@ from UPISAS.experiment_runner_configs.elastic import get_data_from_elastic
 
 import pandas as pd
 
+def upload_pics(file_path):
+    print("Uploading files and starting processing...")
+
+    # Determine the base directory of the script
+    base_path = Path(__file__).resolve().parent.parent
+
+    # Construct the paths dynamically
+    zip_file_path = (base_path / file_path).resolve()
+    csv_file_path = base_path / "images/intervals.csv"
+
+    print("image path:", zip_file_path)
+
+    #Upload the form data
+    url = "http://localhost:3001/api/upload"
+    files = {
+        "zipFile": open(zip_file_path, "rb"),
+        "csvFile": open(csv_file_path, "rb"),
+    }
+    data = {
+        "approch": "NAIVE",  # Replace with the actual value of ⁠ selectedOption ⁠
+        "folder_location": ""  # Replace with the actual value of ⁠ loc ⁠, or remove if None
+    }
+
+    # Send POST request
+    response = requests.post(url, files=files, data=data)
+
+    # Handle response
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+
 def SWITCH_bootup():
     #Run the scripts 
     print("Invoking process.py scripts...")
@@ -37,25 +67,6 @@ def SWITCH_bootup():
     print(f"Status Code: {response.status_code}")
     print(f"Response Body: {response.text}")
 
-    print("Uploading files and starting processing...")
-
-    #Upload the form data
-    url = "http://localhost:3001/api/upload"
-    files = {
-        "zipFile": open("./images/photos1.zip", "rb") if "./images/photos1.zip" else None,
-        "csvFile": open("./images/intervals.csv", "rb"),
-    }
-    data = {
-        "approch": "NAIVE",  # Replace with the actual value of ⁠ selectedOption ⁠
-        "folder_location": ""  # Replace with the actual value of ⁠ loc ⁠, or remove if None
-    }
-
-    # Send POST request
-    response = requests.post(url, files=files, data=data)
-
-    # Handle response
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Body: {response.text}")
 
 def wait_for_connection():
     try:
@@ -162,7 +173,10 @@ class RunnerConfig:
         """Perform any activity required for starting the run here.
         For example, starting the target system to measure.
         Activities after starting the run should also be performed here."""
-        self.strategy.RT_THRESHOLD = float(context.run_variation['rt_threshold'])
+
+        urlArray = ["images/photos1.zip", "images/photos2.zip", "images/photos3.zip"]
+        print("run_num: ", context.run_nr)
+        upload_pics(urlArray[context.run_nr - 1])
 
         self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
         time.sleep(3)
