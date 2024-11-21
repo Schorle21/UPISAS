@@ -5,10 +5,6 @@ class SwitchStrategy(Strategy):
 
     def __init__(self, exemplar):
         super().__init__(exemplar)
-<<<<<<< Updated upstream
-=======
-        
->>>>>>> Stashed changes
         self.time = -1
         self.count = 0
 
