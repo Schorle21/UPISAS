@@ -3,8 +3,8 @@ import time
 
 class SwitchStrategy(Strategy):
 
-    def _init_(self, exemplar):
-        super()._init_(exemplar)
+    def __init__(self, exemplar):
+        super().__init__(exemplar)
         self.time = -1
         self.count = 0
 
