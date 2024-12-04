@@ -1,3 +1,4 @@
+
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 import pandas as pd 
@@ -28,8 +29,22 @@ def get_data_from_elastic():
     # We need only '_source', which has all the fields required.
     # This elimantes the elasticsearch metdata like _id, _type, _index.
 
+    print("raw data:")
+
     for hit in result:
         temp.append(hit['_source'])
-    # Create a dataframe.
+        
+    # Create a dataframe..
     df = pd.DataFrame(temp)
+    
+    # Convert columns to appropriate data types (e.g., float)
+    df['confidence'] = pd.to_numeric(df['confidence'], errors='coerce')
+    df['model_processing_time'] = pd.to_numeric(df['model_processing_time'], errors='coerce')
+    df['image_processing_time'] = pd.to_numeric(df['image_processing_time'], errors='coerce')
+    df['absolute_time_from_start'] = pd.to_numeric(df['absolute_time_from_start'], errors='coerce')
+    
+    # Check the dataframe after conversion
+    print("DataFrame after type conversion:")
+    print(df.head())
+    
     return df

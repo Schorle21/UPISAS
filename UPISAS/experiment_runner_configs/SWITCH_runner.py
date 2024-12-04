@@ -122,7 +122,7 @@ class RunnerConfig:
             factors=[factor1],
             exclude_variations=[
             ],
-            data_columns=['confidence','model_processing_time','image_processing_time','absolute_processing_time','input_rate','model']
+            data_columns=['confidence','model_processing_time','image_processing_time','absolute_time_from_start','input_rate','model','average_confidence']
         )
         output.console_log("create_run_table_model executed")
         return self.run_table_model
@@ -209,21 +209,26 @@ class RunnerConfig:
 
     def populate_run_data(self, context: RunnerContext) -> Optional[Dict[str, SupportsStr]]:
         output.console_log("executing populate_run_data")
-        """Parse and process any measurement data here.
-        You can also store the raw measurement data under context.run_dir
-        Returns a dictionary with keys self.run_table_model.data_columns and their values populated"""
+        """Parse and process any measurement data here."""
 
         print("POPULATING DATA FIELDS")
         df = get_data_from_elastic()
         
+        avg_confidence = df['confidence'].mean()  # Get the average confidence
+
         output.console_log("Config.populate_run_data() called!")
 
-        filtered_df = df[['confidence', 'model_processing_time','image_processing_time','absolute_time_from_start']]
+        filtered_df = df[['confidence', 'model_processing_time', 'image_processing_time', 'absolute_time_from_start']]
+        
         return_dict = filtered_df.to_dict()
+
+        return_dict['average_confidence'] = avg_confidence
 
         mon_data = self.strategy.knowledge.monitored_data
         return_dict.update(mon_data)
+        
         print(return_dict)
+        
         return return_dict
 
     def after_experiment(self) -> None:
