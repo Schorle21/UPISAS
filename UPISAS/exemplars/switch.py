@@ -1,5 +1,6 @@
 from UPISAS.exemplar import Exemplar
 import docker
+import os 
 
 network_name = "elk"
 
@@ -11,13 +12,13 @@ class SWITCH_Frontend(Exemplar):
     def __init__(self, auto_start, container_name="switch-3_frontend_UPISAS"):
         docker_config = {
             "name":  container_name,
-            "image": "schorle21/switch-3_frontend",
+            "image": "schorle21/switch-4-frontend",
             "ports" : {3000:3000}}
 
         super().__init__("http://localhost:3003", docker_config, auto_start)
 
     def start_run(self, app):
-        self.exemplar_container.exec_run(cmd = f' sh -c "cd /app/ && npm start" ', detach=True)
+        self.exemplar_container.exec_run(cmd = f' sh -c "cd /app/ && npm start" ', detach=False)
 
 
 class SWITCH_Backend(Exemplar):
@@ -25,12 +26,17 @@ class SWITCH_Backend(Exemplar):
     A class which encapsulates a self-adaptive SWITCH exemplar run in a docker container.
     """
     def __init__(self, auto_start, container_name="switch-3_backend_UPISAS"):
+        host_path = os.path.abspath("./UPISAS/upisas.csv")
+        print(f"Mouting container to HOST_PATH:{host_path}")
         docker_config = {
             "name":  container_name,
-            "image": "schorle21/switch-3_backend",
+            "image": "schorle21/switch-4-backend",
             "ports" : {3001:3001,5001:5001,8000:8000,8089:8089},
             "environment":{"ELASTICSEARCH_HOST": "http://elasticsearch:9200"},
             "network":network_name,
+            "volumes": {
+            host_path: {"bind": "/app/upisas.csv", "mode": "rw"}  #Just try to mount the entire directory?
+            }
             }
 
 
@@ -44,7 +50,7 @@ class SWITCH_Kibana(Exemplar):
     """
     A class which encapsulates a self-adaptive SWITCH exemplar run in a docker container.
     """
-    def __init__(self, auto_start, container_name="kibana_UPISAS"):
+    def __init__(self, auto_start, container_name="kibana"):
         docker_config = {
             "name":  container_name,
             "image": "kibana:7.9.1",
@@ -53,7 +59,7 @@ class SWITCH_Kibana(Exemplar):
             "network" : network_name,
         }
                         
-        super().__init__("http://kibana_UPISAS:5601", docker_config, auto_start,read_log=True)
+        super().__init__("http://kibana_UPISAS:5601", docker_config, auto_start,read_log=False)
 
     def start_run(self, app):
         #self.exemplar_container.exec_run(cmd = f' sh -c "cd /usr/src/app && node {app}" ', detach=True)
@@ -85,7 +91,7 @@ class SWITCH_Elasticsearch(Exemplar):
             "network":network_name,
             }
 
-        super().__init__("http://localhost:9200", docker_config, auto_start,read_log=True)
+        super().__init__("http://localhost:9200", docker_config, auto_start,read_log=False)
 
     def start_run(self, app):
         #self.exemplar_container.exec_run(cmd = f' sh -c "cd /usr/src/app && node {app}" ', detach=True)
