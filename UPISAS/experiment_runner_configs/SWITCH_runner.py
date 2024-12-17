@@ -54,6 +54,8 @@ def upload_pics(file_path):
     print(f"Response Body: {response.text}")
 
 def SWITCH_bootup():
+    #Sleep for 5 seconds give the system a bit of time
+    time.sleep(5)
     #Run the scripts 
     print("Invoking process.py scripts...")
     url = "http://localhost:3001/execute-python-script"
@@ -66,7 +68,8 @@ def SWITCH_bootup():
     response = requests.post(url)
     print(f"Status Code: {response.status_code}")
     print(f"Response Body: {response.text}")
-
+    print("Waiting for switch to boot...")
+    time.sleep(5)
 
 def wait_for_connection():
     try:
@@ -184,7 +187,7 @@ class RunnerConfig:
         urlArray = ["images/photos1.zip", "images/photos2.zip", "images/photos3.zip"]
         print("run_num: ", context.run_nr)
         upload_pics(urlArray[context.run_nr - 1])
-
+        
         self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
         time.sleep(3)
         output.console_log("Config.start_run() called!")
