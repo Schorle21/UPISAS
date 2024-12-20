@@ -53,6 +53,16 @@ def upload_pics(file_path):
     print(f"Status Code: {response.status_code}")
     print(f"Response Body: {response.text}")
 
+
+def switch_stop():
+    print(f"Stopping the Process . . .")
+    url = "http://localhost:3001/api/stopProcess"
+    response = requests.post(url)
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+
+#def switch_restart():
+
 def SWITCH_bootup():
     #Sleep for 5 seconds give the system a bit of time
     time.sleep(5)
@@ -163,8 +173,8 @@ class RunnerConfig:
         while not wait_for_connection():
             print("Waiting for connection to open")
             time.sleep(5)
-
-        SWITCH_bootup()
+        #print("Starting the switch!")
+        #SWITCH_bootup()
 
         output.console_log("Config.before_experiment() called!")
 
@@ -184,8 +194,11 @@ class RunnerConfig:
         For example, starting the target system to measure.
         Activities after starting the run should also be performed here."""
 
+        print("Booting the switch...")
+        SWITCH_bootup()
         urlArray = ["images/photos1.zip", "images/photos2.zip", "images/photos3.zip"]
         print("run_num: ", context.run_nr)
+        print("Uploading images...")
         upload_pics(urlArray[context.run_nr - 1])
         
         self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
@@ -233,6 +246,10 @@ class RunnerConfig:
         """Perform any activity here required for stopping the run.
         Activities after stopping the run should also be performed here."""
         output.console_log("Config.stop_run() called!")
+
+        #Implement API stop function
+        switch_stop()
+
 
     def populate_run_data(self, context: RunnerContext) -> Optional[Dict[str, SupportsStr]]:
         output.console_log("executing populate_run_data")
