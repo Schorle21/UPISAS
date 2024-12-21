@@ -23,7 +23,7 @@ from UPISAS.experiment_runner_configs.elastic import get_data_from_elastic
 
 import pandas as pd
 
-def upload_pics(file_path):
+def upload_images(file_path):
     print("Uploading files and starting processing...")
 
     # Determine the base directory of the script
@@ -54,13 +54,6 @@ def upload_pics(file_path):
     print(f"Response Body: {response.text}")
 
 
-def switch_stop():
-    print(f"Stopping the Process . . .")
-    url = "http://localhost:3001/api/stopProcess"
-    response = requests.post(url)
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Body: {response.text}")
-
 #def switch_restart():
 
 def SWITCH_bootup():
@@ -81,6 +74,25 @@ def SWITCH_bootup():
     print("Waiting for switch to boot...")
     time.sleep(5)
 
+
+def new_Process():
+    print("[API] Calling new process !")
+    url = "http://localhost:3001/api/newProcess"
+    response = requests.post(url)
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+    return
+
+
+def stop_Process():
+    print(f"Stopping the Process . . .")
+    url = "http://localhost:3001/api/stopProcess"
+    response = requests.post(url)
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Body: {response.text}")
+    return
+
+
 def wait_for_connection():
     try:
         response = requests.get("http://localhost:8000/monitor")
@@ -93,6 +105,19 @@ def wait_for_connection():
             return False
     except Exception as e:
         return False
+
+def awaitHold():
+    print("[UPISAS] Awaiting Hold from Switch . . .")
+    while True:
+        f = open("./UPISAS/upisas.csv","r")
+        result = f.read().strip()
+        f.close()
+        print(f"[UPISAS] Read {result}")
+        if result == 'H':
+            print("[UPISAS] Hold detected . . .")
+            return True
+        time.sleep(0.1)
+        pass
 
 
 def unblock():
@@ -142,6 +167,8 @@ class RunnerConfig:
             (RunnerEvents.AFTER_EXPERIMENT , self.after_experiment )
         ])
         self.run_table_model = None  # Initialized later
+        self.processingCount = 0          # Initialize the global processing count to 0
+        self.hasStarted = False
 
         output.console_log("Custom config loaded")
 
@@ -167,6 +194,8 @@ class RunnerConfig:
         self.elasticsearch = SWITCH_Elasticsearch(auto_start=True)  
         self.kibana = SWITCH_Kibana(auto_start=True)
         self.exemplar = SWITCH_Backend(auto_start=True)
+        self.exemplar.start_run() #parameter should be App but its not used so i just put something so i dont get an error
+
         self.front = SWITCH_Frontend(auto_start=True)
         self.strategy = SwitchStrategy(self.exemplar)
         
@@ -185,6 +214,14 @@ class RunnerConfig:
         No context is available here as the run is not yet active (BEFORE RUN)"""
         # Attempt to initialize the exemplar and strategy
         
+        #Execute New Process, execute/script will not allow to restart the software, worstcase kill Node
+
+        #Call NewProcess        - Starts process.py
+        if(not self.hasStarted):
+            new_Process()
+        
+
+
         # time.sleep(3)
         output.console_log("Config.before_run() called!")
 
@@ -194,15 +231,19 @@ class RunnerConfig:
         For example, starting the target system to measure.
         Activities after starting the run should also be performed here."""
 
-        print("Booting the switch...")
-        SWITCH_bootup()
-        urlArray = ["images/photos1.zip", "images/photos2.zip", "images/photos3.zip"]
-        print("run_num: ", context.run_nr)
-        print("Uploading images...")
-        upload_pics(urlArray[context.run_nr - 1])
-        
-        self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
-        time.sleep(3)
+        self.processingCount = 0
+        if(not self.hasStarted):
+            print("Uploading images to start the run ...")
+            imagePath = "images/photos3.zip"
+
+            #To start the run we upload the images 
+            #Call Upload images
+
+            upload_images(imagePath)
+            time.sleep(0.5)
+            self.hasStarted = True
+
+        #Call SetNaiveKnowledge - Maybe we have to call this function maybe not !
         output.console_log("Config.start_run() called!")
 
     def start_measurement(self, context: RunnerContext) -> None:
@@ -213,7 +254,34 @@ class RunnerConfig:
     def interact(self, context: RunnerContext) -> None:
         output.console_log("executing interact")
         """Perform any interaction with the running target system here, or block here until the target finishes."""
-        time_slept = 0
+        N = 3
+        target_processing_goal = 100
+
+        while self.processingCount < target_processing_goal:
+            awaitHold()
+            print("[UPISAS] Holding - Acting . . .")
+
+            #Choose strategy and run it 
+            '''
+            self.strategy.get_monitor_schema()
+            self.strategy.get_adaptation_options_schema()
+            self.strategy.get_execute_schema()
+            self.strategy.get_adaptation_options()
+            
+
+            self.strategy.monitor(verbose=True)
+            if self.strategy.analyze():
+                adaptation = self.strategy.plan()
+                if adaptation is not None:
+                    self.strategy.execute(adaptation=adaptation)
+            '''
+                    
+
+            print("[UPISAS] Unblocking . . .")
+            unblock()
+            self.processingCount += N
+
+        '''
         self.strategy.get_monitor_schema()
         self.strategy.get_adaptation_options_schema()
         self.strategy.get_execute_schema()
@@ -221,7 +289,7 @@ class RunnerConfig:
         
         
 
-        while time_slept < 10:
+        while image_count < target_processing_goal:
             self.strategy.monitor(verbose=True)
             if self.strategy.analyze():
                 adaptation = self.strategy.plan()
@@ -229,10 +297,12 @@ class RunnerConfig:
                     self.strategy.execute(adaptation=adaptation)
                     unblock()
                     
-            time.sleep(3)
-            time_slept+=3
+            time.sleep(0.5)     #Should we even sleep ????
+            image_count+=1 * N
+            print(f"Processed Images: {image_count}")
+        '''
 
-
+        output.console_log(f"Config.interact() Completed! Counted {self.processingCount} / N UPISAS GO interactions . . .")
         output.console_log("Config.interact() called!")
 
     def stop_measurement(self, context: RunnerContext) -> None:
@@ -242,13 +312,21 @@ class RunnerConfig:
         output.console_log("Config.stop_measurement called!")
 
     def stop_run(self, context: RunnerContext) -> None:
-        output.console_log("executing stop_run")
+        #output.console_log("executing stop_run")
         """Perform any activity here required for stopping the run.
         Activities after stopping the run should also be performed here."""
-        output.console_log("Config.stop_run() called!")
+        #output.console_log("Config.stop_run() called!")
 
-        #Implement API stop function
-        switch_stop()
+        #Call Stop Process   - This should be enough !
+
+        #print("Stopping switch processes. . .")
+        #Call Stop Process 
+        #stop_Process()
+
+        #Stop App.py for some reason right here !
+
+        #time.sleep(2)
+        return
 
 
     def populate_run_data(self, context: RunnerContext) -> Optional[Dict[str, SupportsStr]]:
