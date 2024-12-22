@@ -42,7 +42,7 @@ def SWITCH_bootup():
     #Upload the form data
     url = "http://localhost:3001/api/upload"
     files = {
-        "zipFile": open("./images/photos1.zip", "rb") if "./images/photos1.zip" else None,
+        "zipFile": open("./images/mixedJPEG.zip", "rb") if "./images/mixedJPEG.zip" else None,
         "csvFile": open("./images/intervals.csv", "rb"),
     }
     data = {
@@ -117,7 +117,7 @@ class RunnerConfig:
         output.console_log("executing create_run_table_model")
         """Create and return the run_table model here. A run_table is a List (rows) of tuples (columns),
         representing each run performed"""
-        factor1 = FactorModel("run_index", [1,2,3])
+        factor1 = FactorModel("rt_threshold", [0.75, 0.50, 0.25])
         self.run_table_model = RunTableModel(
             factors=[factor1],
             exclude_variations=[
@@ -162,7 +162,7 @@ class RunnerConfig:
         """Perform any activity required for starting the run here.
         For example, starting the target system to measure.
         Activities after starting the run should also be performed here."""
-        self.strategy.RUN_VARIATION = float(context.run_variation['run_index'])
+        self.strategy.RT_THRESHOLD = float(context.run_variation['rt_threshold'])
 
         self.exemplar.start_run(self) #parameter should be App but its not used so i just put something so i dont get an error
         time.sleep(3)
@@ -181,16 +181,17 @@ class RunnerConfig:
         self.strategy.get_adaptation_options_schema()
         self.strategy.get_execute_schema()
         self.strategy.get_adaptation_options()
+        img_count = 0
 
-        while time_slept < 10:
+        while img_count < 100:
             self.strategy.monitor(verbose=True)
             if self.strategy.analyze():
                 adaptation = self.strategy.plan()
                 if adaptation is not None:
                     self.strategy.execute(adaptation=adaptation)
+            img_count+=1
+            print(f"Processed Images: {img_count}")
 
-            time.sleep(3)
-            time_slept+=3
 
 
         output.console_log("Config.interact() called!")
