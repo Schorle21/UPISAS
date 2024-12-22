@@ -169,8 +169,8 @@ class RunnerConfig:
         self.run_table_model = None  # Initialized later
         self.processingCount = 0          # Initialize the global processing count to 0
         self.hasStarted = False
-
         output.console_log("Custom config loaded")
+
 
     def create_run_table_model(self) -> RunTableModel:
         output.console_log("executing create_run_table_model")
@@ -217,10 +217,10 @@ class RunnerConfig:
         #Execute New Process, execute/script will not allow to restart the software, worstcase kill Node
 
         #Call NewProcess        - Starts process.py
-        if(not self.hasStarted):
-            new_Process()
+        #if(not self.hasStarted):
+        #    new_Process()
         
-
+        SWITCH_bootup()
 
         # time.sleep(3)
         output.console_log("Config.before_run() called!")
@@ -234,7 +234,10 @@ class RunnerConfig:
         self.processingCount = 0
         if(not self.hasStarted):
             print("Uploading images to start the run ...")
-            imagePath = "images/photos3.zip"
+            # First one was imagePath = "images/mixedJPEG.zip"
+            #imagePath = "images/mixedJPEGGood.zip"
+            imagePath = "images/mixedJPEG.zip"
+
 
             #To start the run we upload the images 
             #Call Upload images
@@ -261,8 +264,8 @@ class RunnerConfig:
             awaitHold()
             print("[UPISAS] Holding - Acting . . .")
 
+
             #Choose strategy and run it 
-            '''
             self.strategy.get_monitor_schema()
             self.strategy.get_adaptation_options_schema()
             self.strategy.get_execute_schema()
@@ -274,9 +277,8 @@ class RunnerConfig:
                 adaptation = self.strategy.plan()
                 if adaptation is not None:
                     self.strategy.execute(adaptation=adaptation)
-            '''
-                    
-
+            
+            
             print("[UPISAS] Unblocking . . .")
             unblock()
             self.processingCount += N

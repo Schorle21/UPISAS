@@ -27,6 +27,9 @@ class SWITCH_Backend(Exemplar):
     """
     def __init__(self, auto_start, container_name="switch-3_backend_UPISAS"):
         host_path = os.path.abspath("./UPISAS/upisas.csv")
+        host_path2 = os.path.abspath("./UPISAS/knowledge.csv")
+        host_path3 = os.path.abspath("./UPISAS/naive_knowledge.csv")
+
         print(f"Mouting container to HOST_PATH:{host_path}")
         docker_config = {
             "name":  container_name,
@@ -35,7 +38,9 @@ class SWITCH_Backend(Exemplar):
             "environment":{"ELASTICSEARCH_HOST": "http://elasticsearch:9200"},
             "network":network_name,
             "volumes": {
-            host_path: {"bind": "/app/upisas.csv", "mode": "rw"}  #Just try to mount the entire directory?
+            host_path: {"bind": "/app/upisas.csv", "mode": "rw"},  #Just try to mount the entire directory?
+            host_path2: {"bind": "/app/knowledge.csv","mode":"rw"},
+            host_path3: {"bind": "/app/naive_knowledge.csv","mode":"rw"}
             }
             }
 
