@@ -17,6 +17,7 @@ Download the images from docker hub manually
   - If these images are not downloaded manually UPISAS will fail to download them on its own and will crash !
     
 Alternatively you can attempt to pull these images using the following docker command, if this fails download them manually:
+    
     - docker pull schorle21/switch-4-backend
     - docker pull schorle21/switch-4-frontend
 
@@ -25,6 +26,9 @@ Once the images have been downloaded you can continue by going into the UPISAS d
   - In the UPISAS directory run: ./run.sh
   - If run.sh does not work be sure to run sudo chmod +x run.sh
   - Then run ./run.sh
+
+FOR MACBOOK ONLY:
+  - On mac the command to run the UPISAS is: sh run.sh
 ```
 
 
