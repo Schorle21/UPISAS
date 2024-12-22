@@ -1,35 +1,30 @@
 # UPISAS
 Unified Python interface for self-adaptive system exemplars.
 
+
 ### Prerequisites 
 Tested with Python 3.9.12, should work with >=3.7.
 
-### Installation
-In a terminal, navigate to the parent folder of the project and issue:
-```
-pip install -r requirements.txt
-```
-### Run unit tests
-In a terminal, navigate to the parent folder of the project and issue:
-```
-python -m UPISAS.tests.upisas.test_exemplar
-python -m UPISAS.tests.upisas.test_strategy
-python -m UPISAS.tests.swim.test_swim_interface
-```
-### Run
-In a terminal, navigate to the parent folder of the project and issue:
-```
-python run.py
-```
+### How to run Our Strategy - Switch
 
-### Using experiment runner 
-**Please be advised**, experiment runner does not work on native Windows. Since UPISAS also uses docker, your Windows system should have the Windows Subsystem for Linux (WSL) installed already. You can then simply use Python within the WSL for both UPISAS and Experiment Runner (restart the installation above from scratch there, and then proceed with the below).
-```
-cd experiment-runner
-git submodule update --init --recursive
-pip install -r requirements.txt
-cd ..
-sh run.sh 
+Download the images from docker hub manually
+  - Download schorle21/switch-4-frontend
+  - https://hub.docker.com/r/schorle21/switch-4-frontend
+    
+  - Download schorle21/switch-4-backend
+  - https://hub.docker.com/r/schorle21/switch-4-backend
+    
+  - If these images are not downloaded manually UPISAS will fail to download them on its own and will crash !
+    
+Alternatively you can attempt to pull these images using the following docker command, if this fails download them manually:
+    - docker pull schorle21/switch-4-backend
+    - docker pull schorle21/switch-4-frontend
+
+
+Once the images have been downloaded you can continue by going into the UPISAS directory
+  - In the UPISAS directory run: ./run.sh
+  - If run.sh does not work be sure to run sudo chmod +x run.sh
+  - Then run ./run.sh
 ```
 
 
