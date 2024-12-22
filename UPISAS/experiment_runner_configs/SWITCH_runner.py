@@ -42,7 +42,7 @@ def SWITCH_bootup():
     #Upload the form data
     url = "http://localhost:3001/api/upload"
     files = {
-        "zipFile": open("./images/photos1.zip", "rb") if "./images/photos1.zip" else None,
+        "zipFile": open("./images/mixedJPEG.zip", "rb") if "./images/mixedJPEG.zip" else None,
         "csvFile": open("./images/intervals.csv", "rb"),
     }
     data = {
@@ -117,7 +117,7 @@ class RunnerConfig:
         output.console_log("executing create_run_table_model")
         """Create and return the run_table model here. A run_table is a List (rows) of tuples (columns),
         representing each run performed"""
-        factor1 = FactorModel("run_index", [1,2,3])
+        factor1 = FactorModel("run_index", [1, 2, 3])
         self.run_table_model = RunTableModel(
             factors=[factor1],
             exclude_variations=[
@@ -181,16 +181,17 @@ class RunnerConfig:
         self.strategy.get_adaptation_options_schema()
         self.strategy.get_execute_schema()
         self.strategy.get_adaptation_options()
+        img_count = 0
 
-        while time_slept < 10:
+        while img_count < 100:
             self.strategy.monitor(verbose=True)
             if self.strategy.analyze():
                 adaptation = self.strategy.plan()
                 if adaptation is not None:
                     self.strategy.execute(adaptation=adaptation)
+            img_count+=1
+            print(f"Processed Images: {img_count}")
 
-            time.sleep(3)
-            time_slept+=3
 
 
         output.console_log("Config.interact() called!")
