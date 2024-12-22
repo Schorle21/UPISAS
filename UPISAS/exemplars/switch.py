@@ -12,7 +12,7 @@ class SWITCH_Frontend(Exemplar):
     def __init__(self, auto_start, container_name="switch-3_frontend_UPISAS"):
         docker_config = {
             "name":  container_name,
-            "image": "switch-4-frontend",
+            "image": "schorle21/switch-4-frontend",
             "ports" : {3000:3000}}
 
         super().__init__("http://localhost:3003", docker_config, auto_start)
@@ -33,7 +33,7 @@ class SWITCH_Backend(Exemplar):
         print(f"Mouting container to HOST_PATH:{host_path}")
         docker_config = {
             "name":  container_name,
-            "image": "switch-4-backend",
+            "image": "schorle21/switch-4-backend",
             "ports" : {3001:3001,5001:5001,8000:8000,8089:8089},
             "environment":{"ELASTICSEARCH_HOST": "http://elasticsearch:9200"},
             "network":network_name,
